@@ -1,101 +1,115 @@
-import Image from "next/image";
+// app/page.tsx
+"use client";
+
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [inputValue, setInputValue] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [response, setResponse] = useState<string | null>(null);
+  const [average, setAverage] = useState<number | null>(null);
+  const [round, setRound] = useState<number | null>(null); // State to store round number
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+  // Fetch the round number when the component mounts
+  useEffect(() => {
+    const fetchRoundNumber = async () => {
+      const res = await fetch("/api/roundnumber");
+      const data = await res.json();
+      if (data.round) {
+        setRound(data.round); // Set the round number
+      } else {
+        console.error("Failed to fetch round number");
+      }
+    };
+
+    fetchRoundNumber();
+  }, []); // Empty dependency array to call once when the component mounts
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStudentName(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Ensure the input is a valid number
+    const numberValue = parseInt(inputValue, 10);
+
+    if (isNaN(numberValue)) {
+      alert("Please enter a valid number.");
+      return;
+    }
+
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      body: JSON.stringify({
+        textnumber: numberValue, // Send as a number
+        studentname: studentName,
+        roundNumber: round,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error); // Handle errors from the backend (like invalid data)
+    } else {
+      setResponse(data.textnumber); // Display the submitted number
+      setAverage(data.average); // Display the calculated average
+    }
+  };
+
+  return (
+    <main className="m-[25%] p-5 mx-[10%] text-slate-700 bg-zinc-300">
+      <h1 className="m-5 text-center">
+        Round <span id="round">{round ?? "Loading..."}</span>
+      </h1>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Name:
+          <input
+            type="text"
+            name="studentname"
+            id="studentname"
+            placeholder="Enter your Name"
+            value={studentName}
+            onChange={handleNameChange}
+            required
+            className="bg-slate-300 text-blue-600"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </label>
+        <br />
+        <label>
+          Enter a Number (0-100):
+          <input
+            type="number"
+            name="textnumber"
+            id="textnumber"
+            value={inputValue}
+            onChange={handleInputChange}
+            min="0"
+            max="100"
+            placeholder="Enter an integer"
+            className="bg-slate-300 text-blue-600"
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        </label>
+        <br />
+        <input
+          type="submit"
+          value="Click to Submit"
+          className="bg-slate-300 text-blue-600 m-5 rounded-lg p-5"
+        />
+      </form>
+
+      {response && <p>You Submitted: {response}</p>}
+      {average !== null && <p>Current Average: {average}</p>}
+    </main>
   );
 }

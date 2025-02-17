@@ -67,8 +67,8 @@ export default function Home() {
   };
 
   return (
-    <main className="m-[25%] p-5 mx-[10%] text-slate-700 bg-zinc-300">
-      <h1 className="m-5 text-center">
+    <main className="m-[25%] p-5 mx-[10%] text-slate-700 bg-zinc-300 flex flex-col">
+      <h1 className="m-5 text-center text-3xl">
         Round <span id="round">{round ?? "Loading..."}</span>
       </h1>
       <form onSubmit={handleSubmit}>
@@ -104,7 +104,7 @@ export default function Home() {
         <input
           type="submit"
           value="Click to Submit"
-          className="bg-slate-300 text-blue-600 m-5 rounded-lg p-5"
+          className="bg-blue-600 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-full p-5 m-5"
         />
       </form>
 

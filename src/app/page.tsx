@@ -67,12 +67,12 @@ export default function Home() {
   };
 
   return (
-    <main className="m-[25%] p-5 mx-[10%] text-slate-700 bg-zinc-300 flex flex-col">
+    <main className="m-[25%] p-5 mx-[10%] text-white  flex flex-col bg-gradient-to-br from-cyan-700 via-blue-500 to-indigo-600">
       <h1 className="m-5 text-center text-3xl">
         Round <span id="round">{round ?? "Loading..."}</span>
       </h1>
-      <form onSubmit={handleSubmit}>
-        <label>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1">
+        <label className="m-5">
           Name:
           <input
             type="text"
@@ -82,11 +82,11 @@ export default function Home() {
             value={studentName}
             onChange={handleNameChange}
             required
-            className="bg-slate-300 text-blue-600"
+            className="bg-blue-300 text-white p-2"
           />
         </label>
-        <br />
-        <label>
+
+        <label className="m-5">
           Enter a Number (0-100):
           <input
             type="number"
@@ -96,11 +96,10 @@ export default function Home() {
             onChange={handleInputChange}
             min="0"
             max="100"
-            placeholder="Enter an integer"
-            className="bg-slate-300 text-blue-600"
+            className="bg-blue-300 text-white p-2"
           />
         </label>
-        <br />
+
         <input
           type="submit"
           value="Click to Submit"

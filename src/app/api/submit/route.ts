@@ -1,87 +1,63 @@
-// app/api/results/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-// File paths
-const jsonFilePath = path.join(process.cwd(), "data", "average.json");
+// File path to the CSV file
 const csvFilePath = path.join(process.cwd(), "data", "log.csv");
 
-// Function to read the JSON data from the file
-const readDataFromFile = () => {
+// Helper function to check if the CSV file exists
+const fileExists = (filePath: string): boolean => {
+  return fs.existsSync(filePath);
+};
+
+// Helper function to create CSV header if file doesn't exist
+const createCSVHeader = (filePath: string) => {
+  const header = "RoundNumber,StudentName,TextNumber"; // Define the header format without Average
+  fs.writeFileSync(filePath, header + "\n"); // Write the header to the file
+};
+
+// Helper function to append a new record to the CSV file
+const appendCSVData = (data: string) => {
   try {
-    const rawData = fs.readFileSync(jsonFilePath, "utf8");
-    return JSON.parse(rawData);
+    fs.appendFileSync(csvFilePath, data + "\n");
   } catch (error) {
-    return { totalSum: 0, requestCount: 0 }; // Default values if file doesn't exist
+    console.error("Error writing to CSV file:", error);
   }
 };
 
-// Function to write the updated data back to the JSON file
-const writeDataToFile = (data: { totalSum: number; requestCount: number }) => {
-  fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2));
-};
-
-// Function to log data to the CSV file with a timestamp
-const logDataToCSV = (
-  textnumber: number,
-  studentname: string,
-  average: number,
-  roundnumber: number
-) => {
-  const timestamp = new Date().toISOString(); // Get current timestamp in ISO format
-  const csvData = `${timestamp},${textnumber},${studentname},${average},${roundnumber}\n`;
-
-  // Check if the file exists to write headers only if the file is new
-  const fileExists = fs.existsSync(csvFilePath);
-  if (!fileExists) {
-    fs.appendFileSync(
-      csvFilePath,
-      "Timestamp,TextNumber,StudentName,Average,RoundNumber\n"
-    ); // Write header
-  }
-
-  // Append the log entry to the CSV file
-  fs.appendFileSync(csvFilePath, csvData);
-};
-
+// POST handler for submitting data
 export async function POST(req: NextRequest) {
   try {
-    const { textnumber, studentname, roundNumber } = await req.json(); // Get the data from the request
+    const body = await req.json();
 
-    // Ensure textnumber is a number (parse it to an integer)
-    const parsedNumber = parseInt(textnumber, 10);
+    const { textnumber, studentname, roundNumber } = body;
 
-    if (isNaN(parsedNumber)) {
-      return NextResponse.json({ error: "Invalid number" }, { status: 400 });
+    // Validate input data
+    if (!textnumber || !studentname || !roundNumber) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing required fields: textnumber, studentname, or roundNumber",
+        },
+        { status: 400 }
+      );
     }
 
-    // Read the current data from the file
-    const data = readDataFromFile();
+    // Check if the CSV file exists, and if not, create the header
+    if (!fileExists(csvFilePath)) {
+      createCSVHeader(csvFilePath);
+    }
 
-    // Update the sum and count
-    data.totalSum += parsedNumber;
-    data.requestCount += 1;
+    // Prepare the new record as a CSV line without "Average"
+    const newRecord = `${roundNumber},${studentname},${textnumber}`;
 
-    // Calculate the average
-    const average = data.totalSum / data.requestCount;
+    // Append the new record to the CSV file
+    appendCSVData(newRecord);
 
-    // Write the updated data back to the file
-    writeDataToFile(data);
-
-    console.log(`Received textnumber: ${parsedNumber}`);
-    console.log(`Received studentName: ${studentname}`);
-    console.log(`Current average: ${average}`);
-
-    // Log the data to the CSV file with timestamp
-    logDataToCSV(parsedNumber, studentname, average, roundNumber);
-
-    // Send back the response with the submitted number, average, and student name
-    return NextResponse.json({
-      textnumber: parsedNumber,
-      studentName: studentname, // Include the student's name
-      average, // Include the average
-    });
+    return NextResponse.json(
+      { message: "Record added successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Something went wrong" },

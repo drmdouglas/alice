@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-// File path
+// File path to the CSV file
 const csvFilePath = path.join(process.cwd(), "data", "log.csv");
 
+// Helper function to read CSV data
 const readCSVData = () => {
   try {
     const rawData = fs.readFileSync(csvFilePath, "utf8");
@@ -23,11 +24,13 @@ const readCSVData = () => {
   }
 };
 
+// GET handler for fetching round average and closest student
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const roundNumber = url.searchParams.get("roundNumber");
 
+    // Validate if roundNumber is provided
     if (!roundNumber) {
       return NextResponse.json(
         { error: "Missing roundNumber parameter" },
@@ -35,11 +38,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Read data from the CSV file
     const records = readCSVData();
+
+    // Filter records for the requested round number
     const roundRecords = records.filter(
       (record) => record.RoundNumber === roundNumber
     );
 
+    // If no data is found for the given round
     if (roundRecords.length === 0) {
       return NextResponse.json(
         { error: "No data for the given round" },
@@ -47,7 +54,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Calculate the average of TextNumbers for the given round
+    // Calculate the total of TextNumbers for the round
     const totalTextNumber = roundRecords.reduce(
       (sum, record) => sum + parseFloat(record.TextNumber),
       0
@@ -57,28 +64,30 @@ export async function GET(req: NextRequest) {
     // Calculate 70% of the round average
     const targetPercentage = 0.7 * roundAverage;
 
-    // Find the student whose average is closest to 70% of the round average
+    // Find the student whose TextNumber is closest to 70% of the round average
     let closestStudent = null;
     let smallestDifference = Infinity;
 
     roundRecords.forEach((record) => {
-      const studentAverage = parseFloat(record.Average);
-      const difference = Math.abs(studentAverage - targetPercentage);
+      const studentTextNumber = parseFloat(record.TextNumber);
+      const difference = Math.abs(studentTextNumber - targetPercentage);
 
+      // Update the closest student if the current student's difference is smaller
       if (difference < smallestDifference) {
         smallestDifference = difference;
         closestStudent = record.StudentName;
       }
     });
 
+    // Return the calculated data
     return NextResponse.json({
       roundNumber,
       roundAverage,
-      count: roundRecords.length,
       closestStudent,
       targetPercentage,
     });
   } catch (error) {
+    // Handle any errors that occur during the process
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

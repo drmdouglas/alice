@@ -1,4 +1,3 @@
-// app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,6 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [studentName, setStudentName] = useState("");
   const [response, setResponse] = useState<string | null>(null);
-  const [average, setAverage] = useState<number | null>(null);
   const [round, setRound] = useState<number | null>(null); // State to store round number
 
   // Fetch the round number when the component mounts
@@ -62,12 +60,11 @@ export default function Home() {
       alert(data.error); // Handle errors from the backend (like invalid data)
     } else {
       setResponse(data.textnumber); // Display the submitted number
-      setAverage(data.average); // Display the calculated average
     }
   };
 
   return (
-    <main className="m-[25%] p-5 mx-[10%] text-white  flex flex-col bg-gradient-to-br from-cyan-700 via-blue-500 to-indigo-600">
+    <main className="m-[25%] p-5 mx-[10%] text-white flex flex-col bg-gradient-to-br from-cyan-700 via-blue-500 to-indigo-600">
       <h1 className="m-5 text-center text-3xl">
         Round <span id="round">{round ?? "Loading..."}</span>
       </h1>
@@ -108,7 +105,6 @@ export default function Home() {
       </form>
 
       {response && <p>You Submitted: {response}</p>}
-      {average !== null && <p>Current Average: {average}</p>}
     </main>
   );
 }

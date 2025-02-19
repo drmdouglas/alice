@@ -24,6 +24,22 @@ const readCSVData = () => {
   }
 };
 
+// Helper function to remove duplicate records
+const removeDuplicates = (records: any[]) => {
+  const uniqueRecords: any[] = [];
+  const seenRecords = new Set();
+
+  records.forEach((record) => {
+    const recordKey = `${record.RoundNumber}-${record.StudentName}-${record.TextNumber}`;
+    if (!seenRecords.has(recordKey)) {
+      seenRecords.add(recordKey);
+      uniqueRecords.push(record);
+    }
+  });
+
+  return uniqueRecords;
+};
+
 // GET handler for fetching round average and closest student
 export async function GET(req: NextRequest) {
   try {
@@ -46,8 +62,11 @@ export async function GET(req: NextRequest) {
       (record) => record.RoundNumber === roundNumber
     );
 
+    // Remove duplicates based on RoundNumber, StudentName, and TextNumber
+    const uniqueRoundRecords = removeDuplicates(roundRecords);
+
     // If no data is found for the given round
-    if (roundRecords.length === 0) {
+    if (uniqueRoundRecords.length === 0) {
       return NextResponse.json(
         { error: "No data for the given round" },
         { status: 404 }
@@ -55,11 +74,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Calculate the total of TextNumbers for the round
-    const totalTextNumber = roundRecords.reduce(
+    const totalTextNumber = uniqueRoundRecords.reduce(
       (sum, record) => sum + parseFloat(record.TextNumber),
       0
     );
-    const roundAverage = totalTextNumber / roundRecords.length;
+    const roundAverage = totalTextNumber / uniqueRoundRecords.length;
 
     // Calculate 70% of the round average
     const targetPercentage = 0.7 * roundAverage;
@@ -68,7 +87,7 @@ export async function GET(req: NextRequest) {
     let closestStudent = null;
     let smallestDifference = Infinity;
 
-    roundRecords.forEach((record) => {
+    uniqueRoundRecords.forEach((record) => {
       const studentTextNumber = parseFloat(record.TextNumber);
       const difference = Math.abs(studentTextNumber - targetPercentage);
 

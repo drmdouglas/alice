@@ -1,4 +1,3 @@
-// app/api/roundnumber/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
@@ -12,7 +11,7 @@ const readRoundFromFile = () => {
     const rawData = fs.readFileSync(roundFilePath, "utf8");
     return JSON.parse(rawData);
   } catch (error) {
-    // If the file doesn't exist, initialize round to 1
+    // If the file doesn't exist or has an error, initialize round to 1
     return { round: 1 };
   }
 };
@@ -27,17 +26,33 @@ export async function GET(req: NextRequest) {
     // Read the current round number from the file
     const data = readRoundFromFile();
 
+    // Send back the current round number
+    return NextResponse.json({ round: data.round });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Something went wrong while fetching the round number" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST handler to increment the round number
+export async function POST(req: NextRequest) {
+  try {
+    // Read the current round number from the file
+    const data = readRoundFromFile();
+
     // Increment the round number
-    const newRound = data.round;
+    const newRound = data.round + 1;
 
     // Write the updated round number back to the file
     writeRoundToFile(newRound);
 
-    // Send back the updated round number
+    // Return the updated round number
     return NextResponse.json({ round: newRound });
   } catch (error) {
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Something went wrong while incrementing the round number" },
       { status: 500 }
     );
   }

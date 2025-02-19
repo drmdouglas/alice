@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const data = readRoundFromFile();
 
     // Increment the round number
-    const newRound = data.round + 1;
+    const newRound = data.round;
 
     // Write the updated round number back to the file
     writeRoundToFile(newRound);
